@@ -1,0 +1,44 @@
+{
+  "commands": [
+    {
+      "command": "cd",
+      "commandclass": "CDCommand"
+    },
+    {
+      "command": "ls",
+      "commandclass": "LSCommand"
+    },
+    {
+      "command": "pwd",
+      "commandclass": "PWDCommand"
+    },
+    {
+      "command": "cd..",
+      "commandclass": "CDDotCommand"
+    },
+    {
+      "command": "mkdir",
+      "commandclass": "MKDIRCommand"
+    },
+    {
+      "command": "rmdir",
+      "commandclass": "RMDIRCommand"
+    },
+    {
+      "command": "mv",
+      "commandclass": "MoveCommand"
+    },
+    {
+      "command": "cp",
+      "commandclass": "CopyCommand"
+    },
+    {
+      "command": "cat",
+      "commandclass": "CATReadCommand"
+    },
+    {
+      "command": "cat>>",
+      "commandclass": "CATWriteCommand"
+    }
+  ]
+}

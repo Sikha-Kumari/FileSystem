@@ -1,5 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace FileSystems
 {
@@ -7,117 +11,77 @@ namespace FileSystems
     {
 
         // show current location
-        // cd path
         // history of command executed
-
+        //(add help command)(ls space types of command)
         static void Main(string[] args)
         {
-            string operations;
+            //if (args.Length == 1 && HelpRequired(args[0]))
+            //{
+            //   // DisplayHelp();
+            //}
+            Console.WriteLine("Hi, Welcome to File System. This is an appliation to run your file and directory operations");
 
-            Console.WriteLine("Please enter the directory for your operations");
-            string input = Console.ReadLine();
-            string[] commandAndPath = input.Split(' ');
-            string path = commandAndPath[1];
-            if (commandAndPath[0].ToLower() == "cd" && !string.IsNullOrEmpty(path.ToLower()))
-            {
-                DirectoryOperations.setcurrentDirectory(path);
-            }
+            string operations;
+            Dictionary<string, string> commandList = GetCommandList();
 
             Console.WriteLine("Please enter the operations");
-
+            Console.WriteLine("{0}>", Directory.GetCurrentDirectory());
             while ((operations = Console.ReadLine()) != "exit()")
             {
-                string[] operationsArray = operations.Split(' ');
+                args = operations.Split(' ');
+                string command = args[0].ToLower();
 
-                string command = operationsArray[0].ToLower();
-                string dirFileName = (operationsArray.Length > 1) ? operations.Split(' ')[1].ToLower() : "";
-                string fullpath = path + "\\" + dirFileName;
-                if (operationsArray.Length > 2)
+                if (commandList.ContainsKey(command))
                 {
-                    string destinationFileName = operationsArray[2].ToLower();
-                    string destinationfullpath = path + "\\" + destinationFileName;
-                    ProcessThreeParameterOperations(command, fullpath, destinationfullpath);
-                }
 
-                else if (operationsArray.Length >= 1)
-                {
-                    ProcessOperations(command, fullpath);
-                }
+                    Operations operation = new Operations();
+                    var commandClass = commandList[command];
 
+                    Assembly executing = Assembly.GetExecutingAssembly();
+
+                    Type[] types = executing.GetTypes();
+                    foreach (var item in types)
+                    {
+                        if (commandClass == item.Name)
+                        {
+                            object commandInstance = Activator.CreateInstance(item, new object[] { operation });
+                            Invoker invoker = new Invoker();
+                            invoker.StoreAndExecute((ICommand)commandInstance, args);
+                            break;
+                        }
+                    }
+                }
                 else
                 {
-                    Console.WriteLine("Please enter some valid operations");
+                    Console.WriteLine("Please enter valid operation");
                 }
 
+                Console.WriteLine("Please enter the operations or enter exit() to exit the program");
+                Console.WriteLine("{0}>", Environment.CurrentDirectory);
             }
-
+            Environment.Exit(0);
             Console.ReadKey();
 
-            //FileSystemOperations.WriteToFile();
-
         }
 
-        private static void ProcessOperations(string command, string fullPath)
+        private static Dictionary<string, string> GetCommandList()
         {
-
-            switch (command)
+            string commandJson = File.ReadAllText(@"./../../../CommandConfig.json");
+            var jObject = JObject.Parse(commandJson);
+            JArray commandsArrary = (JArray)jObject["commands"];
+            Dictionary<string, string> commandList = new Dictionary<string, string>();
+            foreach (var command in commandsArrary)
             {
-                //get dir, get files, recursive files(chaining of dir and files)
-                //(full path from current location)
-                //(add help command)(ls space types of command)
-                case "ls":
-                    FileSystemOperations.GetDirectoryAndFiles(fullPath);
-                    break;
-
-                    //path is not being set
-                case "cd..":
-                    DirectoryOperations.setParentDirectory(fullPath);
-                    break;
-
-                case "pwd":
-                    DirectoryOperations.getcurrentDirectory();
-                    break;
-
-                case "mkdir":
-                    DirectoryOperations.makeDirectory(fullPath);
-                    break;
-
-                case "rmdir":
-                    DirectoryOperations.removeDirectory(fullPath);
-                    break;
-                case "cat":
-                    FileSystemOperations.ReadFile(fullPath);
-                    break;
-
-                default:
-                    Console.WriteLine("Please enter some operations");
-                    break;
+                commandList.Add(command["command"].ToString(), command["commandclass"].ToString());
             }
+            return commandList;
         }
 
-        private static void ProcessThreeParameterOperations(string command, string fullPath, string destinationfullpath)
+        private static bool HelpRequired(string param)
         {
-
-            switch (command)
-            {
-                case "cp":
-                    FileSystemOperations.CopyFile(fullPath, destinationfullpath);
-                    break;
-
-                case "mv":
-                    FileSystemOperations.MoveFile(fullPath, destinationfullpath);
-                    break;
-
-                case "cat":
-                    FileSystemOperations.WriteToFile(fullPath, destinationfullpath);
-                    break;
-
-                default:
-                    Console.WriteLine("Please enter some operations");
-                    break;
-            }
+            return param == "-h" || param == "--help";
         }
+
+        
     }
-
-    
 }
